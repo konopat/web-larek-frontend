@@ -2,6 +2,8 @@
 // ПСЕВДОНИМЫ И КАСТОМНЫЕ ТИПЫ
 // ---
 
+import { Form } from '../components/common/Form';
+
 // Для работы EventEmitter
 export type EventName = string | RegExp; // Для имен событий
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -12,7 +14,12 @@ export type EmitterEvent = {
 };
 
 // Для ID продукта
-type ProductID = string;
+export type ProductID = string;
+
+// Для списка категорий продуктов
+export interface ICategories {
+	[category: string]: string;
+}
 
 // ---
 // MODEL
@@ -32,7 +39,7 @@ export interface IProductEntity {
 	description: string;
 	image: string;
 	category: string;
-	price: number;
+	price: number | null;
 }
 
 // Список продуктов
@@ -45,7 +52,7 @@ export interface IProductList {
 // MODEL – PRODUCT
 // ---
 export interface IProductModel {
-	items: IProductList; // Доступно к покупке
+	list: IProductList; // Доступно к покупке
 	cart: IProductList; // Продукты в корзине
 	cartAmount: number; // Сумма продуктов в корзине
 	selectedItem: IProductEntity; // Выбранный продукт в данный момент
@@ -85,6 +92,14 @@ export interface IOrderModel {
 }
 
 // ---
+// MODEL – Общее состояние приложения
+// ---
+export interface IAppState {
+	order: IOrderModel;
+	products: IProductModel;
+}
+
+// ---
 // VIEW
 // ---
 // Слой для отображения данных и работы с пользовательским интерфейсом
@@ -103,26 +118,26 @@ export interface IComponent<T> {
 
 // Базовый View
 // Используется для компонентов с динамичным контентом
-export interface IContentView {
+export interface IModalData {
 	content: HTMLElement;
 }
 
 // Модальное окно
-// Может отображать динамичный контент и обязательно содержит кнопку "Закрыть"
-export interface IModalView extends IComponent<IContentView> {
-	content: HTMLElement;
-	closeButton: HTMLButtonElement;
+// Принимает контент для отображения. Окно можно "Открыть" и "Закрыть"
+export interface IModalView extends IComponent<IModalData> {
+	open: () => void;
+	close: () => void;
 }
 
 // Карточка
 // Используется в различных списках и галереях
 // Содержит обязательные и опциональные элементы в зависимости от контекста
-export interface ICardView extends IComponent<IProductEntity> {
+export interface ICardView {
 	title: HTMLHeadingElement;
-	description?: HTMLParagraphElement;
-	image: HTMLImageElement;
 	price: HTMLSpanElement;
-	category: HTMLSpanElement;
+	description?: HTMLParagraphElement;
+	image?: HTMLImageElement;
+	category?: HTMLSpanElement;
 	button?: HTMLButtonElement;
 }
 
@@ -144,16 +159,25 @@ export interface ICartView extends IComponent<IProductList> {
 	button: HTMLButtonElement;
 }
 
+// Состояние формы
+export interface IFormState {
+	valid: boolean;
+	errors: string;
+}
+
+// Ошибки формы
+export type FormErrors = Partial<Record<keyof IOrder, string>>;
+
 // Форма заказа
 // Содержит обязательные поля для оформления заказа
 // Предполагает отображение ошибок валидации
-export interface IFormView extends IComponent<IOrderForm> {
-	paymentMethodToggleButtons: HTMLButtonElement[];
-	address: HTMLInputElement;
-	email: HTMLInputElement;
-	phone: HTMLInputElement;
-	submit: HTMLButtonElement;
-	errors: HTMLSpanElement;
+export interface IFormView extends Form<IFormState> {
+	paymentMethodToggleButtonsElement: HTMLButtonElement[];
+	addressElement: HTMLInputElement;
+	emailElement: HTMLInputElement;
+	phoneElement: HTMLInputElement;
+	submitElement: HTMLButtonElement;
+	errorsElement: HTMLSpanElement;
 }
 
 // Заказ оформлен
@@ -173,7 +197,8 @@ export interface ISuccessView extends IComponent<IOrderEntity> {
 
 // API
 // Для работы с сервером
-export interface IApi {
+export interface IAPI {
+	getProduct: (id: ProductID) => Promise<IProductEntity>;
 	getProducts: () => Promise<IProductList>;
 	postOrder: (order: IOrder) => Promise<IOrderEntity>;
 }
@@ -191,6 +216,6 @@ export interface IEvents {
 
 // Реализует единую точку входя для работы со слоем Presenter
 export interface IPresenter {
-	api: IApi;
+	api: IAPI;
 	eventEmitter: IEvents;
 }
