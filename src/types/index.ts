@@ -155,7 +155,7 @@ export interface IPageView extends IComponent<IProductList> {
 // Содержит кнопку оформления заказа
 export interface ICartView extends IComponent<IProductList> {
 	list: HTMLElement;
-	price: HTMLSpanElement;
+	totalPrice: HTMLSpanElement;
 	button: HTMLButtonElement;
 }
 

@@ -10,6 +10,7 @@ export class CardView extends Component<ICardView> {
 	protected _image?: HTMLImageElement;
 	protected _category?: HTMLSpanElement;
 	protected _button?: HTMLButtonElement;
+	protected _listIndex?: HTMLSpanElement;
 
 	constructor(container: HTMLElement) {
 		super(container);
@@ -37,6 +38,13 @@ export class CardView extends Component<ICardView> {
 		if (container.querySelector(`.card__button`) !== null) {
 			this._button = ensureElement<HTMLButtonElement>(
 				`.card__button`,
+				container
+			);
+		}
+
+		if (container.querySelector(`.basket__item-index`) !== null) {
+			this._listIndex = ensureElement<HTMLSpanElement>(
+				`.basket__item-index`,
 				container
 			);
 		}
@@ -77,5 +85,9 @@ export class CardView extends Component<ICardView> {
 	set category(value: string) {
 		this.setText(this._category, value);
 		this.toggleClass(this._category, settings.categories[value], true);
+	}
+
+	set listingIndex(value: number) {
+		this.setText(this._listIndex, value);
 	}
 }

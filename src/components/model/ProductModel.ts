@@ -1,4 +1,10 @@
-import { IProductEntity, IProductList, IProductModel } from '../../types';
+import {
+	IEvents,
+	IProductEntity,
+	IProductList,
+	IProductModel,
+	ProductID,
+} from '../../types';
 import { Model } from '../base/model';
 
 export class ProductModel extends Model<IProductModel> {
@@ -6,6 +12,16 @@ export class ProductModel extends Model<IProductModel> {
 	protected _cart: IProductList;
 	protected _cartAmount: number;
 	protected _selectedItem?: IProductEntity | null;
+
+	constructor(
+		protected data: Partial<IProductList>,
+		protected events: IEvents
+	) {
+		super({}, events);
+		this._list = { items: [], total: 0 };
+		this._cart = { items: [], total: 0 };
+		this._cartAmount = 0;
+	}
 
 	set list(list: IProductList) {
 		this._list = list;
@@ -16,8 +32,8 @@ export class ProductModel extends Model<IProductModel> {
 		return this._list;
 	}
 
-	set cart(items: IProductList) {
-		this._cart = items;
+	set cart(list: IProductList) {
+		this._cart = list;
 	}
 
 	get cart() {
@@ -41,6 +57,19 @@ export class ProductModel extends Model<IProductModel> {
 		return this._selectedItem;
 	}
 
+	addSelectedItemToCart() {
+		if (this.selectedItem) {
+			this._cart.items.push(this.selectedItem);
+			this._cart.total += 1;
+			this.updateCartAmount();
+			this.emitChanges('cart:changed', this._cart);
+		}
+	}
+
+	findById(id: ProductID): IProductEntity {
+		return this._list.items.filter((item) => item.id === id)[0];
+	}
+
 	isInCart(item: IProductEntity) {
 		if (this._cart.items.includes(item)) {
 			return true;
@@ -48,13 +77,26 @@ export class ProductModel extends Model<IProductModel> {
 		return false;
 	}
 
+	updateCartAmount() {
+		let amount = 0;
+		if (this._cart.items.length) {
+			this._cart.items.forEach((item) => {
+				amount += item.price;
+			});
+		}
+		this._cartAmount = amount;
+	}
+
 	removeFromCart(item: IProductEntity) {
 		this._cart.items = this.cart.items.filter((cartItem) => cartItem !== item);
-		this.emitChanges('basket:changed', item);
+		this._cart.total = this._cart.items.length;
+		this.emitChanges('cart:changed', item);
+		this.updateCartAmount();
 	}
 
 	clearCart() {
 		this._cart.items = [];
-		this.emitChanges('basket:changed');
+		this.emitChanges('cart:changed');
+		this.updateCartAmount();
 	}
 }
