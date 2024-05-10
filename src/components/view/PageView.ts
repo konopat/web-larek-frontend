@@ -30,7 +30,7 @@ export class PageView extends Component<IPageView> {
 				// Корзина
 				const cartElement: HTMLElement = evt.target.closest('.header__basket');
 				if (cartElement) {
-					this.events.emit('cart:open');
+					this.events.emit('cart:changed');
 				}
 			}
 		});

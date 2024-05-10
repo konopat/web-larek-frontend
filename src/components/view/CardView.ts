@@ -84,7 +84,9 @@ export class CardView extends Component<ICardView> {
 
 	set category(value: string) {
 		this.setText(this._category, value);
-		this.toggleClass(this._category, settings.categories[value], true);
+		if (this._category) {
+			this.toggleClass(this._category, settings.categories[value], true);
+		}
 	}
 
 	set listingIndex(value: number) {

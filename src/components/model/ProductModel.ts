@@ -32,10 +32,6 @@ export class ProductModel extends Model<IProductModel> {
 		return this._list;
 	}
 
-	set cart(list: IProductList) {
-		this._cart = list;
-	}
-
 	get cart() {
 		return this._cart;
 	}
@@ -50,7 +46,7 @@ export class ProductModel extends Model<IProductModel> {
 
 	set selectedItem(item: IProductEntity) {
 		this._selectedItem = item;
-		this.emitChanges('selectedItem:changed', item);
+		this.emitChanges('selected-item:changed', item);
 	}
 
 	get selectedItem() {
@@ -90,13 +86,14 @@ export class ProductModel extends Model<IProductModel> {
 	removeFromCart(item: IProductEntity) {
 		this._cart.items = this.cart.items.filter((cartItem) => cartItem !== item);
 		this._cart.total = this._cart.items.length;
-		this.emitChanges('cart:changed', item);
 		this.updateCartAmount();
+		this.emitChanges('cart:changed', item);
 	}
 
 	clearCart() {
 		this._cart.items = [];
-		this.emitChanges('cart:changed');
+		this._cart.total = this._cart.items.length;
 		this.updateCartAmount();
+		this.emitChanges('cart:changed');
 	}
 }

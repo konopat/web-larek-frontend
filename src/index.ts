@@ -33,20 +33,17 @@ const pageWrapper: HTMLElement = document.querySelector('.page__wrapper');
 // Переиспользуемые части интерфейса
 const page = new PageView(document.body, events);
 const modal = new Modal(modalTemplate, events);
+const cart = new CartView(cloneTemplate(basketTemplate), events);
 
-// Дальше идет бизнес-логика
+//----
+// БИЗНЕС-ЛОГИКА
+//----
 // Поймали событие, сделали что нужно
 
 // Если изменились элементы каталога
 events.on('items:changed', () => {
 	page.gallery = productModel.list.items.map((item) => {
-		const card = new CardView(cloneTemplate(galleryTemplate));
-		card.title = item.title;
-		card.price = item.price;
-		card.description = item.description;
-		card.image = item.image;
-		card.category = item.category;
-		card.id = item.id; // Будем использовать для всплывающих событий
+		const card = createCardView(item, galleryTemplate);
 		return card.render();
 	});
 });
@@ -61,7 +58,7 @@ events.on('item:selected', (item: HTMLElement) => {
 	)[0];
 	if (selectedProduct) {
 		// Если нашли, сохраняем
-		// После сохранения, модель доложит о событии 'selectedItem:changed'
+		// После сохранения, модель доложит о событии 'selected-item:changed'
 		productModel.selectedItem = selectedProduct;
 	} else {
 		console.error(
@@ -71,23 +68,25 @@ events.on('item:selected', (item: HTMLElement) => {
 });
 
 // Если изменились данные выбранной карточки
-events.on('selectedItem:changed', (item: IProductEntity) => {
-	const card = new CardView(cloneTemplate(cardPreviewTemplate));
-	card.title = item.title;
-	card.price = item.price;
-	card.description = item.description;
-	card.image = item.image;
-	card.category = item.category;
-	card.id = item.id;
-	const modalData = {
-		content: card.render(),
-	};
-	modal.render(modalData);
+events.on('selected-item:changed', (item: IProductEntity) => {
+	const card = createCardView(item, cardPreviewTemplate);
+	modal.render({ content: card.render() });
 });
 
-// Если пошел запрос на открытие корзины
-events.on('cart:open', () => {
-	const cart = renderCartView();
+// Если изменились данные в корзине
+events.on('cart:changed', () => {
+	// Создаем карточки продуктов, добавленных в корзину
+	const products = productModel.cart.items.map((item, index) => {
+		const card = createCardView(item, cardBasketTemplate);
+		card.listingIndex = index + 1;
+		return card.render();
+	});
+	// Создаем корзину
+	cart.list = products;
+	cart.totalPrice = productModel.cartAmount;
+	// Обновляем счетчик товаров
+	page.cartTotal = productModel.cart.total;
+	// Перерисовываем корзину
 	modal.render({ content: cart.render() });
 });
 
@@ -100,37 +99,28 @@ events.on('modal:open', (content) => {
 		// Если открыта карточка
 		const card = content.querySelector('.card_full');
 		if (card) {
-			openCardHandle(card);
+			openCard(card);
 		}
 
 		// Если открыта корзина
 		const cart = content.querySelector('.basket__list');
 		if (cart) {
-			openCartHandle(cart, content);
+			openCart(cart, content);
 		}
 	}
 });
 
+// Если модальное окно закрыто
 events.on('modal:close', () => {
 	page.toggleClass(pageWrapper, 'page__wrapper_locked', false);
 });
 
-events.on('cart:changed', () => {
-	// Обновляем счетчик товаров
-	page.cartTotal = productModel.cart.total;
-});
+//----
+// ВЫНЕСЕННАЯ ЛОГИКА
+//----
 
-// Получаем продукты с сервера
-api
-	.getProducts()
-	.then((result) => {
-		productModel.list = result;
-	})
-	.catch((err) => {
-		console.error(err);
-	});
-
-const openCardHandle = (card: Element) => {
+// Открыть карточку
+const openCard = (card: Element) => {
 	const cardButtonElement: HTMLButtonElement =
 		card.querySelector('.card__button');
 	// Проверяем выбранную карточку
@@ -156,14 +146,29 @@ const openCardHandle = (card: Element) => {
 	}
 };
 
-const openCartHandle = (cart: Element, context: Element) => {
+// Открыть корзину
+const openCart = (cart: Element, context: Element) => {
 	// Если в корзине должны быть товары
 	if (productModel.cart.items.length) {
 		const cards = cart.querySelectorAll('.card');
 		// Отрисовываем список товаров
-		renderCardListing(cards);
-		// Вешаем слушатель на кнопку оформления заказа
-		const orderButton = context.querySelector('.basket__button');
+		cards.forEach((card: HTMLElement) => {
+			const product = productModel.findById(card.dataset['id']);
+			const deleteButton = card.querySelector('.basket__item-delete');
+			if (deleteButton) {
+				// Вешаем слушатели на кнопки удаления товара
+				deleteButton.addEventListener(
+					'click',
+					() => {
+						productModel.removeFromCart(product); // Удаляем из модели
+					},
+					{ once: true } // Удаляем слушатель сразу после использования
+				);
+			}
+		});
+		// Вешаем слушатель на кнопку оформления заказа только если в корзине есть товары
+		const orderButton: HTMLButtonElement =
+			context.querySelector('.basket__button');
 		orderButton.addEventListener('click', () => {
 			console.log(orderButton);
 			////////////////////////
@@ -173,32 +178,35 @@ const openCartHandle = (cart: Element, context: Element) => {
 	}
 };
 
-const renderCartView = () => {
-	const cart = new CartView(cloneTemplate(basketTemplate), events);
-	const products = productModel.cart.items.map((item, index) => {
-		const card = new CardView(cloneTemplate(cardBasketTemplate));
-		card.listingIndex = index + 1;
-		card.id = item.id;
-		card.title = item.title;
-		card.price = item.price;
-		return card.render();
-	});
-	cart.list = products;
-	cart.totalPrice = productModel.cartAmount;
-	return cart;
+//----
+// VIEW-ГЕНЕРАТОРЫ
+//----
+
+const createCardView = (
+	item: IProductEntity,
+	template: HTMLTemplateElement
+) => {
+	const card = new CardView(cloneTemplate(template));
+	card.id = item.id;
+	card.title = item.title;
+	card.price = item.price;
+	if (item.description) {
+		card.description = item.description;
+	}
+	if (item.image) {
+		card.image = item.image;
+	}
+	if (item.category) {
+		card.category = item.category;
+	}
+	return card;
 };
 
-const renderCardListing = (cards: NodeListOf<Element>) => {
-	// Вешаем слушатели на кнопки удаления товара
-	cards.forEach((card: HTMLElement) => {
-		const product = productModel.findById(card.dataset['id']);
-		const deleteButton = card.querySelector('.basket__item-delete');
-		if (deleteButton) {
-			deleteButton.addEventListener('click', () => {
-				productModel.removeFromCart(product); // Удаляем из модели
-				const cart = renderCartView(); // Перерисовываем корзину
-				modal.render({ content: cart.render() }); // Перерисовываем модальное окно
-			});
-		}
+api
+	.getProducts()
+	.then((result) => {
+		productModel.list = result;
+	})
+	.catch((err) => {
+		console.error(err);
 	});
-};
