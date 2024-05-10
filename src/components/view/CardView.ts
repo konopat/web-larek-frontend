@@ -1,4 +1,4 @@
-import { ICardView, ICategories, ProductID } from '../../types';
+import { ICardView, ICategories, IProductEntity, ProductID } from '../../types';
 import { settings } from '../../utils/constants';
 import { ensureElement } from '../../utils/utils';
 import { Component } from '../base/component';
@@ -12,20 +12,34 @@ export class CardView extends Component<ICardView> {
 	protected _button?: HTMLButtonElement;
 	protected _listIndex?: HTMLSpanElement;
 
-	constructor(container: HTMLElement) {
+	constructor(container: HTMLElement, data: IProductEntity) {
 		super(container);
 
 		this._title = ensureElement<HTMLElement>(`.card__title`, container);
+		this.setText(this._title, data.title);
+
 		this._price = ensureElement<HTMLSpanElement>(`.card__price`, container);
+		if (data.price) {
+			this.setText(this._price, `${String(data.price)} синапсов`);
+		} else {
+			this.setText(this._price, 'Бесценно 🗿');
+		}
+
+		if (data.id) {
+			this.container.dataset.id = data.id;
+		}
 
 		if (container.querySelector(`.card__text`) !== null) {
 			this._description = ensureElement<HTMLParagraphElement>(
 				`.card__text`,
 				container
 			);
+			this.setText(this._description, data.description);
 		}
+
 		if (container.querySelector(`.card__image`) !== null) {
 			this._image = ensureElement<HTMLImageElement>(`.card__image`, container);
+			this.setImage(this._image, data.image, this.title);
 		}
 
 		if (container.querySelector(`.card__category`) !== null) {
@@ -33,6 +47,8 @@ export class CardView extends Component<ICardView> {
 				`.card__category`,
 				container
 			);
+			this.setText(this._category, data.category);
+			this._category.classList.add(settings.categories[data.category]);
 		}
 
 		if (container.querySelector(`.card__button`) !== null) {
@@ -40,6 +56,10 @@ export class CardView extends Component<ICardView> {
 				`.card__button`,
 				container
 			);
+
+			if (!data.price) {
+				this.setDisabled(this._button, true);
+			}
 		}
 
 		if (container.querySelector(`.basket__item-index`) !== null) {

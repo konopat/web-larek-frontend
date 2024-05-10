@@ -1,4 +1,5 @@
 import { IEvents, IPageView } from '../../types';
+import { settings } from '../../utils/constants';
 import { ensureElement } from '../../utils/utils';
 import { Component } from '../base/component';
 
@@ -25,12 +26,12 @@ export class PageView extends Component<IPageView> {
 				const cardElement: HTMLElement = evt.target.closest('.card');
 				if (cardElement) {
 					// Докладываем о событии и передаем элемент
-					this.events.emit('item:selected', cardElement);
+					this.events.emit(settings.event.itemSelected, cardElement);
 				}
 				// Корзина
 				const cartElement: HTMLElement = evt.target.closest('.header__basket');
 				if (cartElement) {
-					this.events.emit('cart:changed');
+					this.events.emit(settings.event.cartChanged);
 				}
 			}
 		});

@@ -5,6 +5,7 @@ import {
 	IProductModel,
 	ProductID,
 } from '../../types';
+import { settings } from '../../utils/constants';
 import { Model } from '../base/model';
 
 export class ProductModel extends Model<IProductModel> {
@@ -13,10 +14,7 @@ export class ProductModel extends Model<IProductModel> {
 	protected _cartAmount: number;
 	protected _selectedItem?: IProductEntity | null;
 
-	constructor(
-		protected data: Partial<IProductList>,
-		protected events: IEvents
-	) {
+	constructor(protected events: IEvents) {
 		super({}, events);
 		this._list = { items: [], total: 0 };
 		this._cart = { items: [], total: 0 };
@@ -25,7 +23,7 @@ export class ProductModel extends Model<IProductModel> {
 
 	set list(list: IProductList) {
 		this._list = list;
-		this.emitChanges('items:changed', { list: this._list });
+		this.emitChanges(settings.event.itemsChanged, { list: this._list });
 	}
 
 	get list() {
@@ -46,7 +44,7 @@ export class ProductModel extends Model<IProductModel> {
 
 	set selectedItem(item: IProductEntity) {
 		this._selectedItem = item;
-		this.emitChanges('selected-item:changed', item);
+		this.emitChanges(settings.event.selectedItemChanged, item);
 	}
 
 	get selectedItem() {
@@ -58,7 +56,7 @@ export class ProductModel extends Model<IProductModel> {
 			this._cart.items.push(this.selectedItem);
 			this._cart.total += 1;
 			this.updateCartAmount();
-			this.emitChanges('cart:changed', this._cart);
+			this.emitChanges(settings.event.cartChanged, this._cart);
 		}
 	}
 
@@ -87,13 +85,13 @@ export class ProductModel extends Model<IProductModel> {
 		this._cart.items = this.cart.items.filter((cartItem) => cartItem !== item);
 		this._cart.total = this._cart.items.length;
 		this.updateCartAmount();
-		this.emitChanges('cart:changed', item);
+		this.emitChanges(settings.event.cartChanged, item);
 	}
 
 	clearCart() {
 		this._cart.items = [];
-		this._cart.total = this._cart.items.length;
+		this._cart.total = null;
+		this._cartAmount = null;
 		this.updateCartAmount();
-		this.emitChanges('cart:changed');
 	}
 }

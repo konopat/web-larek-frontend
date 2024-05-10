@@ -5,11 +5,11 @@ import {
 	IProductEntity,
 	IProductList,
 	ProductID,
-} from '../../types';
-import { API } from '../base/api';
+} from '../types';
+import { API } from './base/api';
 
 // Класс, который отвечает за работу с API в слое Presenter
-export class APIPresenter extends API implements IAPI {
+export class APIProducts extends API implements IAPI {
 	readonly cdn: string;
 
 	constructor(cdn: string, baseUrl: string, options?: RequestInit) {

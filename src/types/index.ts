@@ -86,18 +86,18 @@ export interface IOrder extends IOrderForm {
 // MODEL – ORDER
 // ---
 export interface IOrderModel {
-	state: IOrder; // Текущий заказ
+	state: IOrder | null; // Текущий заказ
 	completedOrders: IOrderEntity[]; // Оформленные заказы (возможно, в будущем понадобится хранить)
-	resetState: () => IOrder; // Отчистить данные текущего заказа
+	resetState: () => void; // Отчистить данные текущего заказа
 }
 
-// ---
-// MODEL – Общее состояние приложения
-// ---
-export interface IAppState {
-	order: IOrderModel;
-	products: IProductModel;
-}
+// // ---
+// // MODEL – Общее состояние приложения
+// // ---
+// export interface IAppState {
+// 	order: IOrderModel;
+// 	products: IProductModel;
+// }
 
 // ---
 // VIEW
@@ -162,7 +162,7 @@ export interface ICartView extends IComponent<IProductList> {
 // Состояние формы
 export interface IFormState {
 	valid: boolean;
-	errors: string;
+	errors: string[];
 }
 
 // Ошибки формы
@@ -184,7 +184,7 @@ export interface IFormView extends Form<IFormState> {
 // Отображает описание с финальной суммой заказа
 // Содержит кнопку, которая закроет модальное окно и обнулит текущий заказ с корзиной
 export interface ISuccessView extends IComponent<IOrderEntity> {
-	description: HTMLParagraphElement;
+	description: number;
 	closeButton: HTMLButtonElement;
 }
 

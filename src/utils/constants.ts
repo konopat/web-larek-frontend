@@ -4,13 +4,9 @@ export const API_URL = `${process.env.API_ORIGIN}/api/weblarek`;
 export const CDN_URL = `${process.env.API_ORIGIN}/content/weblarek`;
 
 export const settings = {
-	labels: {
-		toBuy: 'Купить',
-		addToCart: 'В корзину',
-	},
 	paymentMethod: {
-		online: 'online',
-		onReceipt: 'on receipt',
+		online: 'card',
+		onReceipt: 'cash',
 	},
 	categories: {
 		'софт-скил': 'card__category_soft',
@@ -19,4 +15,18 @@ export const settings = {
 		кнопка: 'card__category_button',
 		'хард-скил': 'card__category_hard',
 	} as ICategories,
+	event: {
+		itemsChanged: 'items:changed',
+		itemSelected: 'item:selected',
+		selectedItemChanged: 'selected-item:changed',
+		cartChanged: 'cart:changed',
+		modalOpen: 'modal:open',
+		modalClose: 'modal:close',
+		orderStart: 'order:start',
+		orderSubmit: 'order:submit',
+		contactsSubmit: 'contacts:submit',
+		successfully: 'successfully',
+		userConfirmedOrder: 'user.confirmed:order',
+		formErrorsChange: 'formErrors:change',
+	},
 };
