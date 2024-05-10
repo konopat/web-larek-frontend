@@ -111,8 +111,7 @@ export interface IComponent<T> {
 	render: (data?: Partial<T>) => HTMLElement;
 }
 
-// Базовый View
-// Используется для компонентов с динамичным контентом
+// Наполнение модального окна
 export interface IModalData {
 	content: HTMLElement;
 }
@@ -176,7 +175,6 @@ export interface IFormContactsView {
 
 // Заказ оформлен
 // Отображает описание с финальной суммой заказа
-// Содержит кнопку, которая закроет модальное окно и обнулит текущий заказ с корзиной
 export interface ISuccessView {
 	description: number;
 }

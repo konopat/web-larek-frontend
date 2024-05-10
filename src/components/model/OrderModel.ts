@@ -63,7 +63,7 @@ export class OrderModel extends Model<IOrderModel> implements IOrderModel {
 			payment: '',
 			email: '',
 			phone: '',
-			total: null,
+			total: 0,
 		};
 	};
 }
