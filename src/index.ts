@@ -2,7 +2,7 @@ import './scss/styles.scss';
 
 import { API_URL, CDN_URL, settings } from './utils/constants';
 import { EventEmitter } from './components/base/events';
-import { APIProducts } from './components/APIProducts';
+import { APIProducts } from './components/presenter/APIProducts';
 import { cloneTemplate, ensureElement } from './utils/utils';
 import { ProductModel } from './components/model/ProductModel';
 import { PageView } from './components/view/PageView';
@@ -14,9 +14,18 @@ import { OrderModel } from './components/model/OrderModel';
 import { FormAddressView } from './components/view/FormAddressView';
 import { FormContactsView } from './components/view/FormContactsView';
 import { SuccessView } from './components/view/SuccessView';
+import { Presenter } from './components/presenter/Presenter';
 
-const events = new EventEmitter();
-const api = new APIProducts(CDN_URL, API_URL);
+// Инициализируем слой Presenter просто для понимания
+// Можно было использовать api и eventsEmitter без объединения в классе Presenter, но так нагляднее
+const presenter = new Presenter(
+	new APIProducts(CDN_URL, API_URL),
+	new EventEmitter()
+);
+
+// Модели данных
+const productModel = new ProductModel(presenter.events);
+const orderModel = new OrderModel(presenter.events);
 
 // Шаблоны
 const galleryTemplate = ensureElement<HTMLTemplateElement>('#card-catalog');
@@ -28,32 +37,31 @@ const orderFormTemplate = ensureElement<HTMLTemplateElement>('#order');
 const contactsFormTemplate = ensureElement<HTMLTemplateElement>('#contacts');
 const successTemplate = ensureElement<HTMLTemplateElement>('#success');
 
-// Модели данных
-const productModel = new ProductModel(events);
-const orderModel = new OrderModel(events);
-
 // Глобальные контейнеры
 const pageWrapper: HTMLElement = document.querySelector('.page__wrapper');
 
 // Переиспользуемые части интерфейса
-const page = new PageView(document.body, events);
-const modal = new Modal(modalTemplate, events);
-const cart = new CartView(cloneTemplate(basketTemplate), events);
+const page = new PageView(document.body, presenter.events);
+const modal = new Modal(modalTemplate, presenter.events);
+const cart = new CartView(cloneTemplate(basketTemplate), presenter.events);
 const formAddress = new FormAddressView(
 	cloneTemplate(orderFormTemplate),
-	events
+	presenter.events
 );
 const formContacts = new FormContactsView(
 	cloneTemplate(contactsFormTemplate),
-	events
+	presenter.events
 );
-const successView = new SuccessView(cloneTemplate(successTemplate), events);
+const successView = new SuccessView(
+	cloneTemplate(successTemplate),
+	presenter.events
+);
 
 // Бизнес-логика
 // Поймали событие, сделали что нужно
 
 // Если изменились элементы каталога
-events.on(settings.event.itemsChanged, () => {
+presenter.events.on(settings.event.itemsChanged, () => {
 	page.gallery = productModel.list.items.map((item) => {
 		const card = new CardView(cloneTemplate(galleryTemplate), item);
 		return card.render();
@@ -61,7 +69,7 @@ events.on(settings.event.itemsChanged, () => {
 });
 
 // Если выбрана карточка
-events.on(settings.event.itemSelected, (item: HTMLElement) => {
+presenter.events.on(settings.event.itemSelected, (item: HTMLElement) => {
 	// Ищем id в списке доступных продуктов
 	const cardID = item.dataset['id'];
 	const selectedProduct: IProductEntity = productModel.list.items.filter(
@@ -79,13 +87,16 @@ events.on(settings.event.itemSelected, (item: HTMLElement) => {
 });
 
 // Если изменились данные выбранной карточки
-events.on(settings.event.selectedItemChanged, (item: IProductEntity) => {
-	const card = new CardView(cloneTemplate(cardPreviewTemplate), item);
-	modal.render({ content: card.render() });
-});
+presenter.events.on(
+	settings.event.selectedItemChanged,
+	(item: IProductEntity) => {
+		const card = new CardView(cloneTemplate(cardPreviewTemplate), item);
+		modal.render({ content: card.render() });
+	}
+);
 
 // Если изменились данные в корзине
-events.on(settings.event.cartChanged, () => {
+presenter.events.on(settings.event.cartChanged, () => {
 	// Создаем карточки продуктов, добавленных в корзину
 	const products = productModel.cart.items.map((item, index) => {
 		const card = new CardView(cloneTemplate(cardBasketTemplate), item);
@@ -102,7 +113,7 @@ events.on(settings.event.cartChanged, () => {
 });
 
 // Если открыто модальное окно
-events.on(settings.event.modalOpen, (content) => {
+presenter.events.on(settings.event.modalOpen, (content) => {
 	// Блокируем прокрутку страницы
 	page.toggleClass(pageWrapper, 'page__wrapper_locked', true);
 	// Проверяем что у нас в содержимом
@@ -157,7 +168,7 @@ events.on(settings.event.modalOpen, (content) => {
 				content
 					.querySelector('.basket__button')
 					.addEventListener('click', () => {
-						events.emit('order:start');
+						presenter.events.emit('order:start');
 					});
 			}
 		}
@@ -165,16 +176,16 @@ events.on(settings.event.modalOpen, (content) => {
 });
 
 // Если модальное окно закрыто
-events.on(settings.event.modalClose, () => {
+presenter.events.on(settings.event.modalClose, () => {
 	page.toggleClass(pageWrapper, 'page__wrapper_locked', false);
 });
 
 // Если пользователь начал оформлять заказ
-events.on(settings.event.orderStart, () => {
+presenter.events.on(settings.event.orderStart, () => {
 	modal.render({
 		content: formAddress.render({
 			valid: false,
-			errors: [],
+			errors: '',
 		}),
 	});
 	// Сразу валидируем форму на случай, если пользователь закроет ее и вернется позже
@@ -182,11 +193,11 @@ events.on(settings.event.orderStart, () => {
 });
 
 // Если пользователь успешно отправил форму адреса
-events.on(settings.event.orderSubmit, () => {
+presenter.events.on(settings.event.orderSubmit, () => {
 	modal.render({
 		content: formContacts.render({
 			valid: false,
-			errors: [],
+			errors: '',
 		}),
 	});
 	// Сразу валидируем форму на случай, если пользователь закроет ее и вернется позже
@@ -194,7 +205,7 @@ events.on(settings.event.orderSubmit, () => {
 });
 
 // Если пользователь успешно отправил форму контактов
-events.on(settings.event.contactsSubmit, () => {
+presenter.events.on(settings.event.contactsSubmit, () => {
 	// Приравниваем сумму корзины к сумме заказа
 	orderModel.state.total = productModel.cartAmount;
 	productModel.cart.items.forEach((item) => {
@@ -202,7 +213,7 @@ events.on(settings.event.contactsSubmit, () => {
 		orderModel.state.items.push(item.id);
 	});
 	// Отправляем заказ на сервер
-	api
+	presenter.api
 		.postOrder(orderModel.state)
 		.then((result: IOrderEntity) => {
 			// Получаем принятный заказ
@@ -214,27 +225,30 @@ events.on(settings.event.contactsSubmit, () => {
 });
 
 // Если заказ был успешно опубликован
-events.on(settings.event.successfully, (completedOrder: IOrderEntity) => {
-	// Рендерим уведомление об успешном заказе
-	modal.render({
-		content: successView.render({
-			description: completedOrder.total, // Публикуем сумму принятого заказа
-		}),
-	});
-	productModel.clearCart();
-	orderModel.resetState();
-	formAddress.reset();
-	formContacts.reset();
-	page.cartTotal = 0;
-});
+presenter.events.on(
+	settings.event.successfully,
+	(completedOrder: IOrderEntity) => {
+		// Рендерим уведомление об успешном заказе
+		modal.render({
+			content: successView.render({
+				description: completedOrder.total, // Публикуем сумму принятого заказа
+			}),
+		});
+		productModel.clearCart();
+		orderModel.resetState();
+		formAddress.reset();
+		formContacts.reset();
+		page.cartTotal = 0;
+	}
+);
 
 // Если пользователь подтвердил успешность заказа (нажал на "За новыми покупками!")
-events.on(settings.event.userConfirmedOrder, () => {
+presenter.events.on(settings.event.userConfirmedOrder, () => {
 	modal.close();
 });
 
 // Если изменилось одно из полей формы адреса
-events.on(
+presenter.events.on(
 	/^(order\..*):change/,
 	(data: { field: keyof IOrderForm; value: string }) => {
 		switch (data.field) {
@@ -252,7 +266,7 @@ events.on(
 );
 
 // Если изменилось одно из полей формы контактов
-events.on(
+presenter.events.on(
 	/^(contacts\..*):change/,
 	(data: { field: keyof IOrderForm; value: string }) => {
 		switch (data.field) {
@@ -270,23 +284,26 @@ events.on(
 );
 
 // Если изменилось состояние валидации форм
-events.on(settings.event.formErrorsChange, (errors: Partial<IOrderForm>) => {
-	// Все проверяемые поля
-	const { payment, address, email, phone } = errors;
-	// Форма адреса
-	formAddress.valid = !payment && !address;
-	formAddress.errors = Object.values({ payment, address })
-		.filter((i) => !!i)
-		.join('; ');
-	// Форма контактов
-	formContacts.valid = !email && !phone;
-	formContacts.errors = Object.values({ email, phone })
-		.filter((i) => !!i)
-		.join('; ');
-});
+presenter.events.on(
+	settings.event.formErrorsChange,
+	(errors: Partial<IOrderForm>) => {
+		// Все проверяемые поля
+		const { payment, address, email, phone } = errors;
+		// Форма адреса
+		formAddress.valid = !payment && !address;
+		formAddress.errors = Object.values({ payment, address })
+			.filter((i) => !!i)
+			.join('; ');
+		// Форма контактов
+		formContacts.valid = !email && !phone;
+		formContacts.errors = Object.values({ email, phone })
+			.filter((i) => !!i)
+			.join('; ');
+	}
+);
 
 // Получаем продукты с сервера
-api
+presenter.api
 	.getProducts()
 	.then((result) => {
 		productModel.list = result;

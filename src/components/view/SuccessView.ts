@@ -2,7 +2,10 @@ import { IEvents, ISuccessView } from '../../types';
 import { ensureElement } from '../../utils/utils';
 import { Component } from '../base/component';
 
-export class SuccessView extends Component<ISuccessView> {
+export class SuccessView
+	extends Component<ISuccessView>
+	implements ISuccessView
+{
 	protected _description: HTMLParagraphElement;
 	protected _closeButton: HTMLButtonElement;
 

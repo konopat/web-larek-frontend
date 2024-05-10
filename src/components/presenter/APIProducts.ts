@@ -5,8 +5,8 @@ import {
 	IProductEntity,
 	IProductList,
 	ProductID,
-} from '../types';
-import { API } from './base/api';
+} from '../../types';
+import { API } from '../base/api';
 
 // Класс, который отвечает за работу с API в слое Presenter
 export class APIProducts extends API implements IAPI {
@@ -15,14 +15,6 @@ export class APIProducts extends API implements IAPI {
 	constructor(cdn: string, baseUrl: string, options?: RequestInit) {
 		super(baseUrl, options);
 		this.cdn = cdn;
-	}
-
-	// Получить продукт
-	getProduct(id: ProductID): Promise<IProductEntity> {
-		return this.get(`/product/${id}`).then((item: IProductEntity) => ({
-			...item,
-			image: this.cdn + item.image,
-		}));
 	}
 
 	// Получить список продуктов

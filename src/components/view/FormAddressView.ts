@@ -1,8 +1,11 @@
-import { FormErrors, IEvents, IFormState } from '../../types';
+import { FormErrors, IEvents, IFormAddressView, IFormState } from '../../types';
 import { settings } from '../../utils/constants';
 import { Form } from '../common/Form';
 
-export class FormAddressView extends Form<IFormState> {
+export class FormAddressView
+	extends Form<IFormState>
+	implements IFormAddressView
+{
 	protected _onlineMethodButton: HTMLButtonElement;
 	protected _cashMethodButton: HTMLButtonElement;
 	protected _addressInput: HTMLInputElement;

@@ -2,7 +2,7 @@ import { IEvents, IOrder, IOrderEntity, IOrderModel } from '../../types';
 import { settings } from '../../utils/constants';
 import { Model } from '../base/model';
 
-export class OrderModel extends Model<IOrderModel> {
+export class OrderModel extends Model<IOrderModel> implements IOrderModel {
 	protected _state: IOrder;
 	protected _completedOrders: IOrderEntity[];
 

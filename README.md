@@ -60,8 +60,8 @@ yarn build
 
 Читать UML-схему в формате .jpg может быть затруднительно, ниже можно найти ссылку на удобный просмотр в Miro.
 
-[Cсылка UML-схему в JPG](./arch.jpg)
-![UML-схема архитектуры проекта](./arch.jpg)
+[Cсылка UML-схему в JPG](./uml_web-larek.jpg)
+![UML-схема архитектуры проекта](./uml_web-larek.jpg)
 
 [Cсылка на Miro – UML-схема архитектуры проекта в хорошем качестве](https://miro.com/app/board/uXjVKNupwEA=/?share_link_id=121664003564)
 

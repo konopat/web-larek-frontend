@@ -3,7 +3,7 @@ import { settings } from '../../utils/constants';
 import { ensureElement } from '../../utils/utils';
 import { Component } from '../base/component';
 
-export class PageView extends Component<IPageView> {
+export class PageView extends Component<IPageView> implements IPageView {
 	protected _cartTotal: HTMLSpanElement;
 	protected _gallery: HTMLElement;
 

@@ -2,7 +2,7 @@ import { ICartView, IEvents } from '../../types';
 import { createElement, ensureElement } from '../../utils/utils';
 import { Component } from '../base/component';
 
-export class CartView extends Component<ICartView> {
+export class CartView extends Component<ICartView> implements ICartView {
 	protected _list: HTMLElement;
 	protected _totalPrice: HTMLSpanElement;
 	protected _button: HTMLButtonElement;

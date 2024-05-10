@@ -57,8 +57,11 @@ export interface IProductModel {
 	cartAmount: number; // Сумма продуктов в корзине
 	selectedItem: IProductEntity; // Выбранный продукт в данный момент
 
+	addSelectedItemToCart: () => void;
+	findById: (id: ProductID) => IProductEntity;
 	isInCart: (item: IProductEntity) => boolean; // Проверить продукт в корзине
-	removeFromCart: (item: IProductEntity) => IProductList; // Удалить продукт из корзины
+	updateCartAmount: () => void;
+	removeFromCart: (item: IProductEntity) => void; // Удалить продукт из корзины
 	clearCart: () => void; // Очистить корзину
 }
 
@@ -90,14 +93,6 @@ export interface IOrderModel {
 	completedOrders: IOrderEntity[]; // Оформленные заказы (возможно, в будущем понадобится хранить)
 	resetState: () => void; // Отчистить данные текущего заказа
 }
-
-// // ---
-// // MODEL – Общее состояние приложения
-// // ---
-// export interface IAppState {
-// 	order: IOrderModel;
-// 	products: IProductModel;
-// }
 
 // ---
 // VIEW
@@ -144,48 +139,46 @@ export interface ICardView {
 // Страница
 // Отображает количество добавленных в корзину продуктов
 // Отображает галерею доступных к продаже продуктов
-export interface IPageView extends IComponent<IProductList> {
-	cartTotal: HTMLSpanElement;
-	gallery: HTMLElement;
+export interface IPageView {
+	cartTotal: number;
+	gallery: HTMLElement[];
 }
 
 // Корзина
 // Отображает список добавленных в корзину продуктов
 // Отображает стоимость добавленных в корзину продуктов
 // Содержит кнопку оформления заказа
-export interface ICartView extends IComponent<IProductList> {
-	list: HTMLElement;
-	totalPrice: HTMLSpanElement;
-	button: HTMLButtonElement;
+export interface ICartView {
+	list: HTMLElement[];
+	totalPrice: number;
 }
 
 // Состояние формы
 export interface IFormState {
 	valid: boolean;
-	errors: string[];
+	errors: string;
 }
 
 // Ошибки формы
 export type FormErrors = Partial<Record<keyof IOrder, string>>;
 
-// Форма заказа
-// Содержит обязательные поля для оформления заказа
-// Предполагает отображение ошибок валидации
-export interface IFormView extends Form<IFormState> {
-	paymentMethodToggleButtonsElement: HTMLButtonElement[];
-	addressElement: HTMLInputElement;
-	emailElement: HTMLInputElement;
-	phoneElement: HTMLInputElement;
-	submitElement: HTMLButtonElement;
-	errorsElement: HTMLSpanElement;
+// Форма адреса и формы оплаты
+export interface IFormAddressView {
+	payment: string;
+	address: string;
+}
+
+// Форма контактов
+export interface IFormContactsView {
+	email: string;
+	phone: string;
 }
 
 // Заказ оформлен
 // Отображает описание с финальной суммой заказа
 // Содержит кнопку, которая закроет модальное окно и обнулит текущий заказ с корзиной
-export interface ISuccessView extends IComponent<IOrderEntity> {
+export interface ISuccessView {
 	description: number;
-	closeButton: HTMLButtonElement;
 }
 
 // ---
@@ -198,7 +191,6 @@ export interface ISuccessView extends IComponent<IOrderEntity> {
 // API
 // Для работы с сервером
 export interface IAPI {
-	getProduct: (id: ProductID) => Promise<IProductEntity>;
 	getProducts: () => Promise<IProductList>;
 	postOrder: (order: IOrder) => Promise<IOrderEntity>;
 }
@@ -217,5 +209,5 @@ export interface IEvents {
 // Реализует единую точку входя для работы со слоем Presenter
 export interface IPresenter {
 	api: IAPI;
-	eventEmitter: IEvents;
+	events: IEvents;
 }

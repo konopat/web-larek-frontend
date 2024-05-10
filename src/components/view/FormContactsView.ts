@@ -1,7 +1,15 @@
-import { FormErrors, IEvents, IFormState } from '../../types';
+import {
+	FormErrors,
+	IEvents,
+	IFormContactsView,
+	IFormState,
+} from '../../types';
 import { Form } from '../common/Form';
 
-export class FormContactsView extends Form<IFormState> {
+export class FormContactsView
+	extends Form<IFormState>
+	implements IFormContactsView
+{
 	protected _emailInput: HTMLInputElement;
 	protected _phoneInput: HTMLInputElement;
 	protected _formErrors: FormErrors = {};

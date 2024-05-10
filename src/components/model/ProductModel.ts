@@ -8,7 +8,10 @@ import {
 import { settings } from '../../utils/constants';
 import { Model } from '../base/model';
 
-export class ProductModel extends Model<IProductModel> {
+export class ProductModel
+	extends Model<IProductModel>
+	implements IProductModel
+{
 	protected _list: IProductList;
 	protected _cart: IProductList;
 	protected _cartAmount: number;
